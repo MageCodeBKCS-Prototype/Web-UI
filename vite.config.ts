@@ -46,7 +46,14 @@ export default defineConfig({
     extensions: [".js", ".json", ".jsx", ".mjs", ".ts", ".tsx", ".vue"]
   },
   server: {
-    port: 8080
+    port: 8080,
+    proxy: {
+      "/api": {
+        target: "http://192.168.60.253:3000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
+      },
+    }
   },
   build: {
     target: "esnext"

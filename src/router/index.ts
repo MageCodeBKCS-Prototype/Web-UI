@@ -65,6 +65,11 @@ const routes = [
         name: "Cluster",
         component: () => import("@/views/analysis/cluster.vue"),
       },
+      {
+        path: "vulnerabilities/:fileName",
+        name: "Vulnerability",
+        component: () => import("@/views/analysis/vulnerabilities.vue"),
+      },
     ],
   },
 

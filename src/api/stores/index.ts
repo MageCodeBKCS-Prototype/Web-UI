@@ -6,3 +6,4 @@ export * from "./api.store";
 export * from "./auth.store";
 export * from "./user.store";
 export * from "./report.store";
+export * from "./codeql.store";

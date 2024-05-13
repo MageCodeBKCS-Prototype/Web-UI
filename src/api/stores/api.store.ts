@@ -6,6 +6,7 @@ import {
   useKgramStore,
   useMetadataStore,
   usePairStore,
+  useCodeqlStore,
 } from "@/api/stores";
 import { refDebounced } from "@vueuse/shared";
 import { guessSimilarityThreshold } from "../utils";
@@ -20,6 +21,7 @@ export const useApiStore = defineStore("api", () => {
   const metadataStore = useMetadataStore();
   const pairStore = usePairStore();
   const reportStore = useReportStore();
+  const codeqlStore = useCodeqlStore();
 
   // If the data is loaded.
   const loading = shallowRef(true);
@@ -54,6 +56,9 @@ export const useApiStore = defineStore("api", () => {
 
       loadingText.value = "Fetching & parsing pairs...";
       await pairStore.hydrate();
+
+      loadingText.value = "Fetching & parsing codeql...";
+      await codeqlStore.hydrate();
 
       // Calculate the initial cut-off value.
       loadingText.value = "Calculating initial cut-off...";
