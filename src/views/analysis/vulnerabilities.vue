@@ -1,7 +1,7 @@
 <template>
   <div class="heading">
     <h2 class="heading-title">
-      Vulnerabilities of Demo.py
+      Vulnerabilities of {{ fileName }}
     </h2>
     <div class="heading-subtitle text-medium-emphasis">
       List of vulnerabilities of the current submission.
@@ -10,17 +10,13 @@
 
   <v-row>
     <v-col cols="12" md="8">
-      <!-- <v-card>
-        <v-card-title>Binding a socket to all network interfaces</v-card-title>
-        <v-card-subtitle>Binding a socket to all interfaces opens it up to traffic from any IPv4 address and is therefore associated with security risks</v-card-subtitle>
-        <v-card-text>'0.0.0.0' binds a socket to all interfaces</v-card-text>
-      </v-card> -->
-
       <v-alert
+        v-if="selectedItem.item"
         density="compact"
-        text="'0.0.0.0' binds a socket to all interfaces"
-        title="Binding a socket to all network interfaces"
-        type="error"
+        :text="selectedItem.item.description"
+        :title="selectedItem.item.name"
+        :color="severityMapping(selectedItem.item.severity).darken"
+        :icon="severityMapping(selectedItem.item.severity).icon"
       ></v-alert>
 
       <v-card class="mt-4">
@@ -29,7 +25,7 @@
           View the code of this submission.
         </v-card-subtitle>
 
-        <my-submission-code class="submission-code" :content="content" language="python" />
+        <my-submission-code v-if="loading && selectedItem.item && content" class="submission-code" :content="content" language="python" :cordination="selectedItem.item.cordination" :severity="selectedItem.item.severity"/>
       </v-card>
     </v-col>
 
@@ -37,8 +33,6 @@
       <v-card
         title="Vulnerabilities"
       >
-        <!-- <v-card-title>Vulnerabilities</v-card-title> -->
-
         <template v-slot:append>
           <v-select
             :items="['All', 'Warning', 'Error']"
@@ -47,22 +41,21 @@
 
         <v-list density="compact">
           <v-list-item
-            v-for="(item, i) in items"
+            v-for="(item, i) in vulnerabilities"
             :key="i"
             :value="item"
-            :color="item.type == 'warning' ? 'warning' : 'error'"
+            :color="severityMapping(item.severity).darken"
             lines="three"
             class="mb-2"
-            :base-color="item.type == 'warning' ? 'orange-darken-4' : 'red-darken-4'"
-            :title="item.text"
-            :subtitle="item.subtitle"
+            :base-color="severityMapping(item.severity).base"
+            :title="item.name"
+            :subtitle="item.description"
+            :active="i === selectedItem.index"
+            @click="handleItemClick(item, i)"
           >
             <template v-slot:prepend>
-              <v-icon :icon="item.type == 'warning' ? 'mdi-alert' : 'mdi-alpha-x-circle'"></v-icon>
+              <v-icon :icon="severityMapping(item.severity).icon"></v-icon>
             </template>
-
-            <!-- <v-list-item-title v-text="item.text"></v-list-item-title> -->
-            <!-- <v-list-item-subtitle v-text="item.subtitle"></v-list-item-subtitle> -->
           </v-list-item>
         </v-list>
 
@@ -72,80 +65,106 @@
 </template>
 
 <script lang="ts" setup>
+import {useCodeqlStore, useFileStore, Vulnerability} from '@/api/stores'
+import { onMounted, ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { File } from "@/api/models";
 
-const items = [
-        { text: 'Constant in conditional expression or statement', subtitle: 'The conditional is always true or always false', type: 'warning' },
-        { text: 'Clear-text storage of sensitive information', subtitle: 'Sensitive information stored without encryption or hashing can expose it to an attacker', type: 'error' },
-        { text: 'Binding a socket to all network interfaces', subtitle: 'Binding a socket to all interfaces opens it up to traffic from any IPv4 address and is therefore associated with security risks', type: 'error' },
-        { text: 'Arbitrary file write during tarfile extraction', subtitle: 'Extracting files from a malicious tar archive without validating that the destination file path is within the destination directory can cause files outside the destination directory to be overwritten', type: 'error' },
-      ]
+const codeqlStore = useCodeqlStore()
+const fileStore = useFileStore()
 
-const content =
-`
-# Example Python program with common vulnerabilities
+const route = useRoute();
+const fileName = route.params?.fileName;
 
-import os
-import tarfile
-import re
-from socket import *
+const vulnerabilities = ref<Vulnerability[]>([])
+const file = ref<File>();
+const content = ref('')
+const loading = ref(false)
 
-from math import *
+const selectedItem = ref<{item: Vulnerability | null, index: number | null}>({item: null, index: null})
 
-user_input = raw_input("Enter your name: ")  # For Python 2 compatibility
+function fetchFileContent() {
+  const files = fileStore.filesList
+  file.value = files.find((file) => file.shortPath === fileName);
+  content.value = String(file.value?.content)
+}
 
-class OldStyleClass:
-    def __init__(self):
-        super(OldStyleClass, self).__init__()
+const initialize = () => {
+  fetchFileContent()
 
-    def some_method(self):
-        assert (1, 2, 3) == (1, 2, 3), "Tuple assertion failed"
+  vulnerabilities.value = codeqlStore.getVulnerabilitiesByFilename(String(fileName))
+  
 
-    def extract_tarfile(self, file_path):
-        with tarfile.open(file_path, 'r') as tar:
-            tar.extractall('/tmp/extracted_files')
+  if (vulnerabilities.value.length < 0) {
+    selectedItem.value.item = null
+  } else {
+    selectedItem.value.item = vulnerabilities.value[0]
+    selectedItem.value.index = 0
+  }
 
-    def search_regex(self, pattern, text):
-        matches = re.findall(pattern, text)
-        return matches
+}
 
-    def filter_html(self, html_content):
-        clean_html = re.sub(r'<.*?>', '', html_content)
-        return clean_html
+initialize()
 
-server_socket = socket(AF_INET, SOCK_STREAM)
-server_socket.bind(('0.0.0.0', 8080))
 
-def process_request(request):
-    if request.method == 'POST':
-        # Process POST request without CSRF token validation
-        pass
+watch(() => route.params.fileName, () => {
+  initialize()
+});
 
-def log_sensitive_info(data):
-    with open('/var/log/sensitive.log', 'a') as log_file:
-        log_file.write(data + '\n')
 
-def store_sensitive_info(username, password):
-    with open('/tmp/credentials.txt', 'w') as creds_file:
-        creds_file.write(f'Username: {username}, Password: {password}')
 
-def execute_command(command):
-    os.system(command)
 
-if 10 == 10:
-    print("Constants are equal")
+// onMounted(() => {
+  // loading.value = true
+// })
 
-a = [1, 2, 3]
-b = a
-if a is b:
-    print("a and b are identical")
+const handleItemClick = (item: any, index: number) => {
+  selectedItem.value.item = item
+  selectedItem.value.index = index
+}
 
-# Sample usage
-obj = OldStyleClass()
-obj.some_method()
-obj.extract_tarfile('/path/to/some/archive.tar')
-obj.search_regex(r'\b(\w+)\b', 'Hello world')
-obj.filter_html('<p>Hello, <b>world</b>!</p>')
-`
+const severityMapping = (type: string) => {
+  switch (type) {
+    case 'warning':
+      return {
+        base: 'orange',
+        darken: 'orange darken-6',
+        icon: 'mdi-alert'
+      }
+    case 'error':
+      return {
+        base: 'red',
+        darken: 'red darken-6',
+        icon: 'mdi-alert-circle'
+      }
+    case 'recommendation':
+      return {
+        base: 'green',
+        darken: 'green darken-6',
+        icon: 'mdi-star-circle'
+      }
+    default:
+      return {
+        base: 'grey',
+        darken: 'grey darken-6',
+        icon: 'mdi-alert'
+      }
+  }
+}
+
+// handleItemClick(vulnerabilities[0], 0)
+// const items = [
+//         { text: 'Constant in conditional expression or statement', subtitle: 'The conditional is always true or always false', type: 'warning' },
+//         { text: 'Clear-text storage of sensitive information', subtitle: 'Sensitive information stored without encryption or hashing can expose it to an attacker', type: 'error' },
+//         { text: 'Binding a socket to all network interfaces', subtitle: 'Binding a socket to all interfaces opens it up to traffic from any IPv4 address and is therefore associated with security risks', type: 'error' },
+//         { text: 'Arbitrary file write during tarfile extraction', subtitle: 'Extracting files from a malicious tar archive without validating that the destination file path is within the destination directory can cause files outside the destination directory to be overwritten', type: 'error' },
+//       ]
+
+
+// initialize()
+
+
+
 </script>
 
 <style lang="scss" scoped>

@@ -298,6 +298,7 @@ export const useFileStore = defineStore("file", () => {
     { deep: true }
   );
 
+
   return {
     filesById,
     filesList,
