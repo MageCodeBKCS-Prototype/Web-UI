@@ -39,7 +39,7 @@
       </span>
     </template>
 
-    <template #item.cluster="{ item }">
+    <!-- <template #item.cluster="{ item }">
       <v-tooltip location="top">
         <template #activator="{ props }">
           <v-btn
@@ -69,7 +69,7 @@
           In different cluster than the current submission.
         </span>
       </v-tooltip>
-    </template>
+    </template> -->
 
     <template #item.actions="{ item }">
       <v-btn
@@ -146,12 +146,12 @@ const headers = computed<any[]>(() => {
     sortable: true,
     filterable: false,
   });
-  h.push({
-    title: "Cluster",
-    key: "cluster",
-    sortable: true,
-    filterable: false,
-  });
+  // h.push({
+  //   title: "Cluster",
+  //   key: "cluster",
+  //   sortable: true,
+  //   filterable: false,
+  // });
   h.push({
     title: "",
     key: "actions",
