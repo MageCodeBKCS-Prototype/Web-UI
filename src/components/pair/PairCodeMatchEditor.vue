@@ -46,6 +46,9 @@ const colors = {
   matchSelected: "rgba(26, 188, 156, 0.3)",
 };
 
+console.log(props);
+
+
 // File to display
 // Based on the pair & the given side.
 const file = computed(() => props.side === "left" ? props.pair.leftFile : props.pair.rightFile);

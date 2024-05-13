@@ -2,12 +2,13 @@
   <div>
     <div class="hero">
       <h2 v-if="reportName" class="hero-title">
-        {{ reportName }}
+        <!-- {{ reportName }} -->
+        Demo.zip
       </h2>
       <h2 v-else class="hero-title">MageCode</h2>
-      <div class="hero-subtitle text-medium-emphasis">
+      <!-- <div class="hero-subtitle text-medium-emphasis">
         Source code plagiarism detection report
-      </div>
+      </div> -->
     </div>
 
     <v-row>
@@ -50,13 +51,13 @@
             </v-list-item>
           </v-list>
 
-          <v-card-title class="info-card-subtitle pt-0 pb-0">
+          <!-- <v-card-title class="info-card-subtitle pt-0 pb-0">
             {{ hasLabels ? legendCount : "No" }} labels detected
           </v-card-title>
 
           <div class="info-card-labels">
             <labels-table show-submissions />
-          </div>
+          </div> -->
         </v-card>
       </v-col>
 
@@ -114,7 +115,7 @@
         <v-card class="stat-card">
           <div class="stat-card-icon">
             <div class="stat-card-icon-background"></div>
-            <v-icon color="primary" size="64">mdi-approximately-equal</v-icon>
+            <v-icon color="primary" size="64">mdi-chart-bell-curve</v-icon>
           </div>
 
           <div class="stat-card-content">
@@ -131,7 +132,7 @@
           </div>
         </v-card>
 
-        <v-card class="stat-card">
+        <!-- <v-card class="stat-card">
           <div class="stat-card-icon">
             <div class="stat-card-icon-background"></div>
             <v-icon color="primary" size="48">mdi-account-group-outline</v-icon>
@@ -154,7 +155,7 @@
               }}%)
             </div>
           </div>
-        </v-card>
+        </v-card> -->
       </v-col>
 
       <!-- Similarity distribution -->
@@ -195,10 +196,10 @@
       <v-col cols="12" md="6">
         <v-card>
           <v-card-title>Submissions</v-card-title>
-          <v-card-subtitle>
+          <!-- <v-card-subtitle>
             Highlights the most suspicious individual submissions, useful for
             exams.
-          </v-card-subtitle>
+          </v-card-subtitle> -->
 
           <submissions-table
             :files="submissionsOverview"

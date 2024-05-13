@@ -28,7 +28,7 @@
               <submissions-pairs-table :file="file" />
             </v-card>
 
-            <v-card class="mt-4">
+            <!-- <v-card class="mt-4">
               <v-card-title>Cluster Timeline</v-card-title>
               <v-card-subtitle class="pb-2">
                 Visual representation of which submission was submitted first.
@@ -65,7 +65,7 @@
                   @click:node="onNodeClick"
                 />
               </v-card-text>
-            </v-card>
+            </v-card> -->
 
             <v-card class="mt-4">
               <v-card-title>Code viewer</v-card-title>
@@ -118,6 +118,33 @@
             </v-card>
 
             <v-card class="mt-4">
+              <v-card-title>Vulnerabilities</v-card-title>
+              <v-card-text>
+                <v-btn
+                  prepend-icon="mdi-check-circle"
+                  base-color="warning"
+                >
+                  <!-- <template v-slot:prepend>
+                    <v-icon color="success"></v-icon>
+                  </template> -->
+
+                  0 warnings
+                </v-btn>
+                <v-btn
+                  prepend-icon="mdi-check-circle"
+                  base-color="error"
+                  class="ml-4"
+                >
+                  <!-- <template v-slot:prepend>
+                    <v-icon color="success"></v-icon>
+                  </template> -->
+
+                  0 errors
+                </v-btn>
+              </v-card-text>
+            </v-card>
+
+            <!-- <v-card class="mt-4">
               <v-card-title>Cluster Graph</v-card-title>
               <v-card-subtitle>
                 Visual representation of submissions in the same cluster.
@@ -143,7 +170,7 @@
                   </graph-canvas>
                 </div>
               </v-card-text>
-            </v-card>
+            </v-card> -->
 
             <v-card class="mt-4">
               <v-card-title>Similarity histogram</v-card-title>
