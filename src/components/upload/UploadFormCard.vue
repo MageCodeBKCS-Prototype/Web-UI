@@ -48,6 +48,10 @@ const languages = [
     name: "Python 3",
     value: "python",
   },
+  {
+    name: "C++",
+    value: "cpp",
+  },
 ];
 
 const accept = shallowRef<boolean>(false);
