@@ -17,7 +17,7 @@ export interface Vulnerability {
   message: string;
   filename: string;
   severity: string;
-  cordination: [number, number, number, number];
+  coordination: [number, number, number, number];
 }
 
 /**
@@ -167,21 +167,21 @@ export const useCodeqlStore = defineStore("codeql", () => {
     // let hasUnlabeled = false;
     // let hasTimestamps = false;
 
-    
+
 
     // TODO: working
     for (const row of fileData) {
       const vulnerability = row as Vulnerability;
 
-      vulnerability.cordination = [parseInt(row.start_line), parseInt(row.start_column), parseInt(row.end_line), parseInt(row.end_column)]
-      
-      
+      vulnerability.coordination = [parseInt(row.start_line), parseInt(row.start_column), parseInt(row.end_line), parseInt(row.end_column)]
+
+
 
       // const filePathSplit = row.filename.split(".");
       // const filePathExtension = filePathSplit[filePathSplit.length - 1];
       // const extra = JSON.parse(row.extra || "{}");
 
-      
+
 
       // extra.timestamp = extra.createdAt && new Date(extra.createdAt);
       // hasTimestamps = hasTimestamps || !!extra.timestamp;
@@ -225,7 +225,7 @@ export const useCodeqlStore = defineStore("codeql", () => {
       //     ? new Date(extra.timestamp.getTime() - timeOffset)
       //     : undefined,
       // };
-      
+
       // // Store original details.
       // file.original = {
       //   path: row.filename,
@@ -263,7 +263,7 @@ export const useCodeqlStore = defineStore("codeql", () => {
     //   labels[defaultLabel.name] = defaultLabel;
     // }
 
-    
+
 
     return { vulnerabilities };
   }
