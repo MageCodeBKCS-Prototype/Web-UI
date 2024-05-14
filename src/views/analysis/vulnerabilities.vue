@@ -1,7 +1,7 @@
 <template>
   <div class="heading">
     <h2 class="heading-title">
-      Vulnerabilities of {{ fileName }}
+      Vulnerabilities of {{ currentFileName }}
     </h2>
     <div class="heading-subtitle text-medium-emphasis">
       List of vulnerabilities of the current submission.
@@ -11,12 +11,12 @@
   <v-row>
     <v-col cols="12" md="8">
       <v-alert
-        v-if="selectedItem.item"
+        v-if="selectedVulnerability"
         density="compact"
-        :text="selectedItem.item.description"
-        :title="selectedItem.item.name"
-        :color="severityMapping(selectedItem.item.severity).darken"
-        :icon="severityMapping(selectedItem.item.severity).icon"
+        :text="selectedVulnerability.description"
+        :title="selectedVulnerability.name"
+        :color="severityMapping(selectedVulnerability.severity).darken"
+        :icon="severityMapping(selectedVulnerability.severity).icon"
       ></v-alert>
 
       <v-card class="mt-4">
@@ -25,19 +25,21 @@
           View the code of this submission.
         </v-card-subtitle>
 
-        <my-submission-code v-if="loading && selectedItem.item && content" class="submission-code" :content="content" language="python" :cordination="selectedItem.item.cordination" :severity="selectedItem.item.severity"/>
+        <my-submission-code class="submission-code"
+                            language="python"
+                            :coordination="selectedVulnerability?.coordination"
+                            :severity="selectedVulnerability?.severity"
+        />
       </v-card>
     </v-col>
 
     <v-col cols="12" md="4">
-      <v-card
-        title="Vulnerabilities"
-      >
-        <template v-slot:append>
-          <v-select
-            :items="['All', 'Warning', 'Error']"
-          ></v-select>
-        </template>
+      <v-card title="Vulnerabilities">
+<!--        <template v-slot:append>-->
+<!--          <v-select-->
+<!--            :items="['All', 'Warning', 'Error']"-->
+<!--          ></v-select>-->
+<!--        </template>-->
 
         <v-list density="compact">
           <v-list-item
@@ -50,78 +52,31 @@
             :base-color="severityMapping(item.severity).base"
             :title="item.name"
             :subtitle="item.description"
-            :active="i === selectedItem.index"
-            @click="handleItemClick(item, i)"
+            :active="selectedVulnerability === item"
+            @click="selectedVulnerability = item"
           >
             <template v-slot:prepend>
               <v-icon :icon="severityMapping(item.severity).icon"></v-icon>
             </template>
           </v-list-item>
         </v-list>
-
       </v-card>
     </v-col>
   </v-row>
 </template>
 
 <script lang="ts" setup>
-import {useCodeqlStore, useFileStore, Vulnerability} from '@/api/stores'
-import { onMounted, ref, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
-import { File } from "@/api/models";
-
-const codeqlStore = useCodeqlStore()
-const fileStore = useFileStore()
+import {useRoute} from 'vue-router';
+import {ref, watch} from "vue";
+import {useCodeqlStore, Vulnerability} from "@/api/stores";
 
 const route = useRoute();
-const fileName = route.params?.fileName;
+const currentFileName = ref(route.params.fileName.toString());
+
+const codeqlStore = useCodeqlStore()
 
 const vulnerabilities = ref<Vulnerability[]>([])
-const file = ref<File>();
-const content = ref('')
-const loading = ref(false)
-
-const selectedItem = ref<{item: Vulnerability | null, index: number | null}>({item: null, index: null})
-
-function fetchFileContent() {
-  const files = fileStore.filesList
-  file.value = files.find((file) => file.shortPath === fileName);
-  content.value = String(file.value?.content)
-}
-
-const initialize = () => {
-  fetchFileContent()
-
-  vulnerabilities.value = codeqlStore.getVulnerabilitiesByFilename(String(fileName))
-  
-
-  if (vulnerabilities.value.length < 0) {
-    selectedItem.value.item = null
-  } else {
-    selectedItem.value.item = vulnerabilities.value[0]
-    selectedItem.value.index = 0
-  }
-
-}
-
-initialize()
-
-
-watch(() => route.params.fileName, () => {
-  initialize()
-});
-
-
-
-
-// onMounted(() => {
-  // loading.value = true
-// })
-
-const handleItemClick = (item: any, index: number) => {
-  selectedItem.value.item = item
-  selectedItem.value.index = index
-}
+const selectedVulnerability = ref<Vulnerability | null>(null)
 
 const severityMapping = (type: string) => {
   switch (type) {
@@ -152,19 +107,23 @@ const severityMapping = (type: string) => {
   }
 }
 
-// handleItemClick(vulnerabilities[0], 0)
-// const items = [
-//         { text: 'Constant in conditional expression or statement', subtitle: 'The conditional is always true or always false', type: 'warning' },
-//         { text: 'Clear-text storage of sensitive information', subtitle: 'Sensitive information stored without encryption or hashing can expose it to an attacker', type: 'error' },
-//         { text: 'Binding a socket to all network interfaces', subtitle: 'Binding a socket to all interfaces opens it up to traffic from any IPv4 address and is therefore associated with security risks', type: 'error' },
-//         { text: 'Arbitrary file write during tarfile extraction', subtitle: 'Extracting files from a malicious tar archive without validating that the destination file path is within the destination directory can cause files outside the destination directory to be overwritten', type: 'error' },
-//       ]
+const initialize = () => {
+  currentFileName.value = route.params.fileName.toString()
 
+  // Fetch vulnerabilities
+  vulnerabilities.value = codeqlStore.getVulnerabilitiesByFilename(currentFileName.value)
+  if (vulnerabilities.value.length < 0) {
+    selectedVulnerability.value = null
+  } else {
+    selectedVulnerability.value = vulnerabilities.value[0]
+  }
+}
 
-// initialize()
+watch(() => route.params.fileName, () => {
+  initialize()
+});
 
-
-
+initialize()
 </script>
 
 <style lang="scss" scoped>

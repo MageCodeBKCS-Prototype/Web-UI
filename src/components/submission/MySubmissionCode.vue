@@ -3,18 +3,27 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, shallowRef } from "vue";
 import * as monaco from "monaco-editor";
-import { watch, computed } from "vue";
+import {onMounted, ref, shallowRef, watch} from "vue";
+import {useFileStore} from "@/api/stores";
+import {useRoute} from "vue-router";
 
 interface Props {
-  content: string;
-  language: string;
-  severity: string;
-  cordination: [number, number, number, number];
+  coordination?: [number, number, number, number];
+  severity?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {});
+const props = withDefaults(defineProps<Props>(), {
+  coordination: undefined,
+  severity: "error",
+});
+
+const fileStore = useFileStore()
+
+const route = useRoute();
+const currentFileName = ref(route.params.fileName.toString());
+const currentFile = ref();
+const content = ref<string>()
 
 // Editor template ref
 const editorElem = ref();
@@ -27,40 +36,13 @@ const decorations = shallowRef([]);
 const colors = {
   error: "rgba(254, 37, 7, 0.7)",
   warning: "rgba(255,152,0, 0.7)",
-  recommendation: "rgba(254, 37, 7, 0.7)",
+  recommendation: "rgb(3,241,69)",
 
   matchHovering: "rgba(60, 115, 168, 0.3)",
   matchSelected: "rgba(26, 188, 156, 0.3)",
 };
 
-// Initialize the editor.
-const initialize = (): void => {
-  console.log("MySubmission", props.content, props.language, props.severity, props.cordination);
-  
-
-
-  // Monaco editor
-  editor.value = monaco.editor.create(editorElem.value, {
-    value: props.content,
-    language: props.language,
-    readOnly: true,
-    smoothScrolling: true,
-    automaticLayout: true,
-    renderLineHighlight: "none",
-    renderValidationDecorations: "off",
-    contextmenu: false,
-    minimap: {
-      enabled: true,
-    }    
-  });
-  console.log("MySubmission", editor.value.value);
-
-  // Update decorations
-  updateDecorations();
-  editor.value.revealLineInCenter(33);
-};
-
-const severityColor = computed(() => {
+const severityColor = () => {
   switch (props.severity) {
     case 'error':
       return colors.error;
@@ -69,21 +51,21 @@ const severityColor = computed(() => {
     case 'recommendation':
       return colors.recommendation;
   }
-});
+};
 
 const updateDecorations = (): void => {
-  if (props.cordination?.length == 4) {
+  if (props.coordination?.length == 4) {
     decorations.value = editor.value?.deltaDecorations(
       decorations.value,
       [
         {
-          range: new monaco.Range(...props.cordination),
+          range: new monaco.Range(...props.coordination),
           options: {
             isWholeLine: true,
             className: "highlight-match-" + props.severity,
             overviewRuler: {
               position: monaco.editor.OverviewRulerLane.Full,
-              color: severityColor.value,
+              color: severityColor(),
             },
           },
         }
@@ -92,22 +74,48 @@ const updateDecorations = (): void => {
   }
 };
 
-// Update the editor content.
-watch(() => {[props.cordination, props.content]}, () => {
-  initialize();
-});
-
-
-// Destroy the editor.
-const destroy = (): void => {
-  editor.value?.dispose();
+const getFileContent = () => {
+  const files = fileStore.filesList
+  currentFile.value = files.find((file) => file.shortPath === currentFileName.value);
+  content.value = String(currentFile.value?.content)
 };
 
-// Initialize the editor when the component is mounted.
-onMounted(() => initialize());
+const initEditor = (): void => {
+  // Monaco editor
+  editor.value = monaco.editor.create(editorElem.value, {
+    value: content.value,
+    language: "python",
+    readOnly: true,
+    smoothScrolling: true,
+    automaticLayout: true,
+    renderLineHighlight: "none",
+    renderValidationDecorations: "off",
+    contextmenu: false,
+    minimap: {
+      enabled: true,
+    }
+  });
+  if (props.coordination) {
+    editor.value.revealLineInCenter(props.coordination[0]);
+  }
+};
 
-// Destroy the editor when the component is unmounted.
-onUnmounted(() => destroy());
+watch(() => [route.params.fileName, props.coordination], (value) => {
+  if (value[0]) {
+    currentFileName.value = value[0]?.toString();
+    getFileContent();
+    editor.value?.dispose();
+    initEditor();
+  }
+  updateDecorations();
+});
+
+onMounted(() => {
+  getFileContent();
+  initEditor();
+  updateDecorations();
+});
+
 </script>
 
 <style lang="scss">
