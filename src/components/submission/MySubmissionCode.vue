@@ -3,15 +3,27 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, shallowRef } from "vue";
 import * as monaco from "monaco-editor";
+import {onMounted, ref, shallowRef, watch} from "vue";
+import {useFileStore} from "@/api/stores";
+import {useRoute} from "vue-router";
 
 interface Props {
-  content: string;
-  language: string;
+  coordination?: [number, number, number, number];
+  severity?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {});
+const props = withDefaults(defineProps<Props>(), {
+  coordination: undefined,
+  severity: "error",
+});
+
+const fileStore = useFileStore()
+
+const route = useRoute();
+const currentFileName = ref(route.params.fileName.toString());
+const currentFile = ref();
+const content = ref<string>()
 
 // Editor template ref
 const editorElem = ref();
@@ -22,17 +34,57 @@ const decorations = shallowRef([]);
 
 // Colors for the different selections.
 const colors = {
-  match: "rgba(254, 37, 7, 0.7)",
+  error: "rgba(254, 37, 7, 0.7)",
+  warning: "rgba(255,152,0, 0.7)",
+  recommendation: "rgb(3,241,69)",
+
   matchHovering: "rgba(60, 115, 168, 0.3)",
   matchSelected: "rgba(26, 188, 156, 0.3)",
 };
 
-// Initialize the editor.
-const initialize = (): void => {
+const severityColor = () => {
+  switch (props.severity) {
+    case 'error':
+      return colors.error;
+    case 'warning':
+      return colors.warning;
+    case 'recommendation':
+      return colors.recommendation;
+  }
+};
+
+const updateDecorations = (): void => {
+  if (props.coordination?.length == 4) {
+    decorations.value = editor.value?.deltaDecorations(
+      decorations.value,
+      [
+        {
+          range: new monaco.Range(...props.coordination),
+          options: {
+            isWholeLine: true,
+            className: "highlight-match-" + props.severity,
+            overviewRuler: {
+              position: monaco.editor.OverviewRulerLane.Full,
+              color: severityColor(),
+            },
+          },
+        }
+      ]
+    );
+  }
+};
+
+const getFileContent = () => {
+  const files = fileStore.filesList
+  currentFile.value = files.find((file) => file.shortPath === currentFileName.value);
+  content.value = String(currentFile.value?.content)
+};
+
+const initEditor = (): void => {
   // Monaco editor
   editor.value = monaco.editor.create(editorElem.value, {
-    value: props.content,
-    language: props.language,
+    value: content.value,
+    language: "python",
     readOnly: true,
     smoothScrolling: true,
     automaticLayout: true,
@@ -43,43 +95,59 @@ const initialize = (): void => {
       enabled: true,
     }
   });
-
-  decorations.value = editor.value?.deltaDecorations(
-    decorations.value,
-    [
-      {
-        range: new monaco.Range(33, 0, 33, 9),
-        options: {
-          isWholeLine: true,
-          className: "highlight-match",
-          overviewRuler: {
-            position: monaco.editor.OverviewRulerLane.Full,
-            color: colors.match,
-          },
-        },
-      }
-    ]
-  );
-
-  editor.value.revealLineInCenter(33);
+  if (props.coordination) {
+    editor.value.revealLineInCenter(props.coordination[0]);
+  }
 };
 
-// Destroy the editor.
-const destroy = (): void => {
-  editor.value?.dispose();
-};
+watch(() => [route.params.fileName, props.coordination], (value) => {
+  if (value[0]) {
+    currentFileName.value = value[0]?.toString();
+    getFileContent();
+    editor.value?.dispose();
+    initEditor();
+  }
+  updateDecorations();
+});
 
-// Initialize the editor when the component is mounted.
-onMounted(() => initialize());
+onMounted(() => {
+  getFileContent();
+  initEditor();
+  updateDecorations();
+});
 
-// Destroy the editor when the component is unmounted.
-onUnmounted(() => destroy());
 </script>
 
 <style lang="scss">
 .highlight {
-  &-match {
-    background-color: v-bind("colors.match");
+  &-match-error {
+    background-color: v-bind("colors.error");
+    transition: background-color 5s ease;
+
+    &--selected {
+      background-color: v-bind("colors.matchSelected");
+    }
+
+    &--hovering {
+      background-color: v-bind("colors.matchHovering");
+    }
+  }
+
+  &-match-warning {
+    background-color: v-bind("colors.warning");
+    transition: background-color 5s ease;
+
+    &--selected {
+      background-color: v-bind("colors.matchSelected");
+    }
+
+    &--hovering {
+      background-color: v-bind("colors.matchHovering");
+    }
+  }
+
+  &-match-recommendation {
+    background-color: v-bind("colors.recommendation");
     transition: background-color 5s ease;
 
     &--selected {

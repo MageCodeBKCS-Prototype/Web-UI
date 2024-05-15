@@ -8,8 +8,9 @@
     :items-per-page="props.itemsPerPage"
     must-sort
     fixed-header
-    @click:row="rowClicked"
   >
+    <!-- @click:row="rowClicked" -->
+
     <template #item.name="{ item }">
       <div class="submission-info">
         <div class="submission-name">
@@ -57,6 +58,11 @@
       </span>
     </template>
 
+    <template #item.action="{ item }">
+      <v-btn @click="viewSubmission(item)">view_submission</v-btn>
+      <v-btn v-if="getVulnerabilitiesNumber(item)" @click="viewVulnerability(item)">view_vulnerabilities</v-btn>
+    </template>
+
     <template #item.timestamp="{ item }">
       <span class="submission-timestamp">
         <v-tooltip location="top">
@@ -91,7 +97,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from "pinia";
 import { computed } from "vue";
-import { useFileStore } from "@/api/stores";
+import { useFileStore, useCodeqlStore } from "@/api/stores";
 import { File } from "@/api/models";
 import { useVModel } from "@vueuse/core";
 import { useRouter } from "vue-router";
@@ -170,6 +176,13 @@ const headers = computed(() => {
     filterable: false,
   });
 
+  h.push({
+    title: "Action",
+    key: "action",
+    sortable: !props.disableSorting,
+    filterable: false,
+  });
+
   if (!props.concise) {
     h.push({
       title: "Lines",
@@ -212,10 +225,22 @@ const items = computed(() => {
   return props.limit ? items.slice(0, props.limit) : items;
 });
 
-// When a row is clicked.
-const rowClicked = (e: Event, value: any): void => {
-  router.push({ name: "Submission", params: { fileId: value.item.id } });
+const viewSubmission = (item: any): void => {
+  router.push({ name: "Submission", params: { fileId: item.id } });
 };
+
+const getVulnerabilitiesNumber = (item: any): number => {
+  const codeqlStore = useCodeqlStore();
+  const vulnerabilities = codeqlStore.getVulnerabilitiesByFilename(item.name);
+  return vulnerabilities.length;
+};
+
+const viewVulnerability = (item: any): void => {
+  console.log("Viewing vulnerability", item);
+  
+  router.push({ name: "Vulnerability", params: { fileName: item.name } });
+};
+
 </script>
 
 <style lang="scss" scoped>
@@ -223,7 +248,7 @@ const rowClicked = (e: Event, value: any): void => {
   &-label,
   &-path {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.5rem;  
     align-items: center;
   }
 }
