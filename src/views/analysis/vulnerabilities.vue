@@ -1,14 +1,18 @@
 <template>
   <div class="heading">
     <h2 class="heading-title">
-      Vulnerabilities of {{ currentFileName }}
+      Vulnerabilities of {{ file.shortPath }}
     </h2>
     <div class="heading-subtitle text-medium-emphasis">
       List of vulnerabilities of the current submission.
     </div>
   </div>
 
-  <v-row>
+  <h3 v-if="vulnerabilities.length <= 0" class="heading-title">
+    No vulnerabilities found in {{ file.shortPath }}
+  </h3>
+
+  <v-row v-if="vulnerabilities.length > 0">
     <v-col cols="12" md="8">
       <v-alert
         v-if="selectedVulnerability"
@@ -29,6 +33,7 @@
                             language="python"
                             :coordination="selectedVulnerability?.coordination"
                             :severity="selectedVulnerability?.severity"
+                            :currentFile="file"
         />
       </v-card>
     </v-col>
@@ -66,12 +71,20 @@
 </template>
 
 <script lang="ts" setup>
-import {useRoute} from 'vue-router';
-import {ref, watch} from "vue";
-import {useCodeqlStore, Vulnerability} from "@/api/stores";
+import { useRoute } from 'vue-router';
+import { ref, computed, watch } from "vue";
+import { storeToRefs } from "pinia";
+import { useFileStore, useCodeqlStore, Vulnerability } from "@/api/stores";
 
+const fileStore = useFileStore();
 const route = useRoute();
-const currentFileName = ref(route.params.fileName.toString());
+
+const fileId = computed(() => route.params?.fileId);
+const { filesById } = storeToRefs(fileStore);
+// Get the file by id.
+const file = computed(() => filesById.value[+fileId.value]);
+// const currentFileName = ref(route.params.fileName.toString());
+// const currentFileName = computed(() => file.value.shortPath);
 
 const codeqlStore = useCodeqlStore()
 
@@ -108,10 +121,10 @@ const severityMapping = (type: string) => {
 }
 
 const initialize = () => {
-  currentFileName.value = route.params.fileName.toString()
+  // currentFileName.value = route.params.fileName.toString()
 
   // Fetch vulnerabilities
-  vulnerabilities.value = codeqlStore.getVulnerabilitiesByFilename(currentFileName.value)
+  vulnerabilities.value = codeqlStore.getVulnerabilitiesByFilename(file.value.shortPath)
   if (vulnerabilities.value.length < 0) {
     selectedVulnerability.value = null
   } else {

@@ -112,7 +112,6 @@ export const useReportStore = defineStore("report", () => {
         }
 
         currentReport.value = response.data;
-        console.log("current report", currentReport.value);
         
         return response.data;
     }

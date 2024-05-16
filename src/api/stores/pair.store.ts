@@ -116,6 +116,8 @@ export const usePairStore = defineStore("pairs", () => {
     }
 
     pairsById.value = parse(await fetch(), fileStore.filesActiveById);
+    console.log("pair", pairsById);
+    
     hydrated.value = true;
   }
 

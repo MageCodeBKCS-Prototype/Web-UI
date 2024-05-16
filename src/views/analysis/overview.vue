@@ -2,8 +2,7 @@
   <div>
     <div class="hero">
       <h2 v-if="reportName" class="hero-title">
-        <!-- {{ reportName }} -->
-        Demo.zip
+        {{ reportName }}
       </h2>
       <h2 v-else class="hero-title">MageCode</h2>
       <!-- <div class="hero-subtitle text-medium-emphasis">
@@ -58,6 +57,26 @@
           <div class="info-card-labels">
             <labels-table show-submissions />
           </div> -->
+        </v-card>
+
+        <v-card class="stat-card">
+          <div class="stat-card-icon">
+            <div class="stat-card-icon-background"></div>
+            <v-icon color="primary" size="64">mdi-chart-bell-curve</v-icon>
+          </div>
+
+          <div class="stat-card-content">
+            <h3 class="stat-card-title">
+              Highest machine code probability
+
+              <info-dot>
+                Highest machine code probability in the submission.
+              </info-dot>
+            </h3>
+            <div class="stat-card-value">
+              <similarity-display :similarity="highestMachineCodeProbability" text />
+            </div>
+          </div>
         </v-card>
       </v-col>
 
@@ -115,19 +134,20 @@
         <v-card class="stat-card">
           <div class="stat-card-icon">
             <div class="stat-card-icon-background"></div>
-            <v-icon color="primary" size="64">mdi-chart-bell-curve</v-icon>
+            <v-icon color="primary" size="64">mdi-approximately-equal</v-icon>
           </div>
 
           <div class="stat-card-content">
             <h3 class="stat-card-title">
-              Highest machine code probability
+              Total vulnerabilities
 
               <info-dot>
-                Highest machine code probability in the submission.
+                Total number of vulnerabilities in the submission.
               </info-dot>
             </h3>
-            <div class="stat-card-value">
-              <similarity-display :similarity="highestMachineCodeProbability" text />
+            <div class="stat-card-value" :class="`text-${totalNumberOfVulnerabilities > 0 ? 'error' : 'success'}`">
+              {{  totalNumberOfVulnerabilities }}
+              <!-- <similarity-display :similarity="totalNumberOfVulnerabilities" text /> -->
             </div>
           </div>
         </v-card>
@@ -262,6 +282,7 @@ import {
   useFileStore,
   usePairStore,
   useMetadataStore,
+  useCodeqlStore
 } from "@/api/stores";
 import { UploadReport } from "@/types/uploads/UploadReport";
 
@@ -269,10 +290,12 @@ const apiStore = useApiStore();
 const fileStore = useFileStore();
 const pairStore = usePairStore();
 const metadataStore = useMetadataStore();
+const codeQlStore = useCodeqlStore();
 
 const { currentReport } = storeToRefs(apiStore);
 const { labels, similaritiesList, hasLabels } = storeToRefs(fileStore);
 const { clustering, sortedClustering } = storeToRefs(pairStore);
+const { vulnerabilitiesList } = storeToRefs(codeQlStore);
 
 const reportName = computed(() => metadataStore.metadata?.reportName);
 const createdAt = computed(() => metadataStore.metadata?.createdAt);
@@ -298,6 +321,7 @@ const highestSimilarity = computed(() => {
   return pair?.similarity ?? 0;
 });
 
+// Highest machine code probability
 const highestMachineCodeProbability = computed(() => {
   const reportFiles = currentReport.value?.report_file
   if (reportFiles) {
@@ -305,6 +329,15 @@ const highestMachineCodeProbability = computed(() => {
   }
 
   return 0;
+});
+
+// Total number of vulnerabilities
+const totalNumberOfVulnerabilities = computed(() => {
+  if (vulnerabilitiesList.value) {
+    return vulnerabilitiesList.value.length;
+  }
+
+  return 0
 });
 
 // Similarities map for every file
@@ -338,23 +371,21 @@ const language = computed(() => {
 // First x amount of submissions to display.
 // Sorted by highest similarity
 const submissionsOverview = computed(() => {
-  return fileStore.filesActiveList.map(f => {    
-    console.log("current report", currentReport);
-    
-    const reportFile = currentReport.value?.report_file.find(rf => rf.filename == f.shortPath)
-    console.log("report file ", reportFile);
-    
-    if (reportFile) {
-      console.log(f);
-      
+  return fileStore.filesActiveList.map(f => {        
+    const reportFile = currentReport.value?.report_file.find(rf => rf.filename == f.shortPath)    
+    if (reportFile) {      
       f.machine_code_probability = reportFile.machine_code_probability;
+    }
+
+    if (vulnerabilitiesList.value) {
+      f.num_vulnerabilities = vulnerabilitiesList.value.reduce((acc, vulnerability) => vulnerability.filename == f.shortPath ? acc + 1 : acc, 0);
+    } else {
+      f.num_vulnerabilities = 0;
     }
 
     return f;
   });
 });
-
-console.log("submission overview", submissionsOverview);
 
 // First x amount of clusters to display.
 const clustersOverview = computed(() => {
