@@ -8,6 +8,7 @@
     :items-per-page="props.itemsPerPage"
     must-sort
     fixed-header
+    @click:row="rowClicked"
   >
     <!-- @click:row="rowClicked" -->
 
@@ -49,19 +50,33 @@
 
     <template #item.machine_code_probability="{ item }">
       <span class="submission-similarity">
-        <similarity-display
+        <similarity-display v-if="!isNaN(item.machine_code_probability)"
           :similarity="item.machine_code_probability"
           :dense="props.dense"
           progress
           dim-below-cutoff
         />
+        <p v-else-if="item.machine_code_probability < 0">Language not support</p>
+        <p v-else>No result</p>
       </span>
     </template>
 
-    <template #item.action="{ item }">
+    <template #item.num_vulnerabilities="{ item }">
+      <span class="submission-similarity">
+        {{ item.num_vulnerabilities }}
+        <!-- <similarity-display
+          :similarity="item.num_vulnerabilities"
+          :dense="props.dense"
+          progress
+          dim-below-cutoff
+        /> -->
+      </span>
+    </template>
+
+    <!-- <template #item.action="{ item }">
       <v-btn @click="viewSubmission(item)">view_submission</v-btn>
       <v-btn v-if="getVulnerabilitiesNumber(item)" @click="viewVulnerability(item)">view_vulnerabilities</v-btn>
-    </template>
+    </template> -->
 
     <template #item.timestamp="{ item }">
       <span class="submission-timestamp">
@@ -177,11 +192,18 @@ const headers = computed(() => {
   });
 
   h.push({
-    title: "Action",
-    key: "action",
+    title: "Number of vulnerabilities",
+    key: "num_vulnerabilities",
     sortable: !props.disableSorting,
     filterable: false,
   });
+
+  // h.push({
+  //   title: "Action",
+  //   key: "action",
+  //   sortable: !props.disableSorting,
+  //   filterable: false,
+  // });
 
   if (!props.concise) {
     h.push({
@@ -215,7 +237,8 @@ const items = computed(() => {
     timestamp: file.extra.timestamp,
     lines: file.content.split("\n").length ?? 0,
     order: sortedFiles.indexOf(file) + 1,
-    machine_code_probability: file.machine_code_probability
+    machine_code_probability: file.machine_code_probability,
+    num_vulnerabilities: file.num_vulnerabilities
   }));
 
   // Sort the files by similarity, by default.
@@ -225,9 +248,14 @@ const items = computed(() => {
   return props.limit ? items.slice(0, props.limit) : items;
 });
 
-const viewSubmission = (item: any): void => {
-  router.push({ name: "Submission", params: { fileId: item.id } });
+// When a row is clicked.
+const rowClicked = (e: Event, value: any): void => {
+  router.push({ name: "Submission", params: { fileId: value.item.id } });
 };
+
+// const viewSubmission = (item: any): void => {
+//   router.push({ name: "Submission", params: { fileId: item.id } });
+// };
 
 const getVulnerabilitiesNumber = (item: any): number => {
   const codeqlStore = useCodeqlStore();
@@ -235,11 +263,11 @@ const getVulnerabilitiesNumber = (item: any): number => {
   return vulnerabilities.length;
 };
 
-const viewVulnerability = (item: any): void => {
-  console.log("Viewing vulnerability", item);
+// const viewVulnerability = (item: any): void => {
+//   console.log("Viewing vulnerability", item);
   
-  router.push({ name: "Vulnerability", params: { fileName: item.name } });
-};
+//   router.push({ name: "Vulnerability", params: { fileName: item.name } });
+// };
 
 </script>
 

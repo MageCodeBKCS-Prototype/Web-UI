@@ -4,6 +4,7 @@ import { useAuthStore } from "@/api/stores";
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { UploadReport } from "@/types/uploads/UploadReport";
+import { AxiosProgressEvent } from "axios";
 
 export const useReportStore = defineStore("report", () => {
     const authStore = useAuthStore();
@@ -112,12 +113,11 @@ export const useReportStore = defineStore("report", () => {
         }
 
         currentReport.value = response.data;
-        console.log("current report", currentReport.value);
         
         return response.data;
     }
 
-    async function createReport(data: any, uploadProcessCallback) {        
+    async function createReport(data: any, uploadProcessCallback: (_: AxiosProgressEvent) => void) {        
         const response = await axiosClient.post(
             // "http://127.0.0.1:8000/reports",
             `${import.meta.env.VITE_API_URL}/reports`,

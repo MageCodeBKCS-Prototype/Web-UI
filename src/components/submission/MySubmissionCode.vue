@@ -5,25 +5,28 @@
 <script lang="ts" setup>
 import * as monaco from "monaco-editor";
 import {onMounted, ref, shallowRef, watch} from "vue";
-import {useFileStore} from "@/api/stores";
-import {useRoute} from "vue-router";
+// import {useFileStore} from "@/api/stores";
+import { File } from "@/api/models";
+// import {useRoute} from "vue-router";
 
 interface Props {
+  currentFile: File | null;
   coordination?: [number, number, number, number];
   severity?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  currentFile: null,
   coordination: undefined,
   severity: "error",
 });
 
-const fileStore = useFileStore()
+// const fileStore = useFileStore()
 
-const route = useRoute();
-const currentFileName = ref(route.params.fileName.toString());
-const currentFile = ref();
-const content = ref<string>()
+// const route = useRoute();
+// const currentFileName = ref(route.params.fileName.toString());
+// const currentFile = ref();
+// const content = ref<string>()
 
 // Editor template ref
 const editorElem = ref();
@@ -71,19 +74,22 @@ const updateDecorations = (): void => {
         }
       ]
     );
+    editor.value?.revealLineInCenter(props.coordination[0]);    
   }
 };
 
-const getFileContent = () => {
-  const files = fileStore.filesList
-  currentFile.value = files.find((file) => file.shortPath === currentFileName.value);
-  content.value = String(currentFile.value?.content)
-};
+// const getFileContent = () => {
+//   const files = fileStore.filesList
+//   // currentFile.value = files.find((file) => file.shortPath === currentFileName.value);
+//   currentFile.value = files.find((file) => file.shortPath === props.filename);
+//   content.value = String(currentFile.value?.content)
+// };
 
 const initEditor = (): void => {
   // Monaco editor
   editor.value = monaco.editor.create(editorElem.value, {
-    value: content.value,
+    // value: content.value,
+    value: props.currentFile?.content,
     language: "python",
     readOnly: true,
     smoothScrolling: true,
@@ -95,23 +101,23 @@ const initEditor = (): void => {
       enabled: true,
     }
   });
-  if (props.coordination) {
-    editor.value.revealLineInCenter(props.coordination[0]);
-  }
+  // if (props.coordination) {
+  //   editor.value.revealLineInCenter(props.coordination[0]);
+  // }
 };
 
-watch(() => [route.params.fileName, props.coordination], (value) => {
-  if (value[0]) {
-    currentFileName.value = value[0]?.toString();
-    getFileContent();
-    editor.value?.dispose();
-    initEditor();
-  }
+watch(() => [props.coordination], (value) => {
+  // if (value[0]) {
+  //   currentFileName.value = value[0]?.toString();
+  //   getFileContent();
+  //   editor.value?.dispose();
+  //   initEditor();
+  // }
   updateDecorations();
 });
 
 onMounted(() => {
-  getFileContent();
+  // getFileContent();
   initEditor();
   updateDecorations();
 });

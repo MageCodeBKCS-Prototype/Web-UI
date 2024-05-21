@@ -78,7 +78,7 @@
           </v-col>
 
           <v-col cols="12" md="4">
-            <v-card>
+            <!-- <v-card>
               <v-card-title>Information</v-card-title>
               <v-card-text>
                 <div class="info-item" v-if="hasLabels">
@@ -100,9 +100,9 @@
                   <file-timestamp :file="file" long />
                 </div>
               </v-card-text>
-            </v-card>
+            </v-card> -->
 
-            <v-card class="mt-4">
+            <v-card>
               <v-card-title>Machine Code Probability</v-card-title>
               <v-card-text>
                 <div class="stat-card-content">
@@ -118,20 +118,28 @@
             </v-card>
 
             <v-card class="mt-4">
-              <v-card-title>Vulnerabilities</v-card-title>
+              <v-card-title>
+                Vulnerabilities
+                <router-link
+                  class="text-subtitle-1"
+                  :to="{ name: 'Vulnerability', params: { fileId: fileId } }"
+                >
+                  View details
+                </router-link>
+              </v-card-title>
               <v-card-text>
                 <v-btn
-                  prepend-icon="mdi-check-circle"
+                  prepend-icon="mdi-alert"
                   base-color="warning"
                 >
                   <!-- <template v-slot:prepend>
                     <v-icon color="success"></v-icon>
                   </template> -->
 
-                  0 warnings
+                  {{ num_warnings }} warnings
                 </v-btn>
                 <v-btn
-                  prepend-icon="mdi-check-circle"
+                  prepend-icon="mdi-alert-circle"
                   base-color="error"
                   class="ml-4"
                 >
@@ -139,7 +147,19 @@
                     <v-icon color="success"></v-icon>
                   </template> -->
 
-                  0 errors
+                  {{ num_errors }} errors
+                </v-btn>
+
+                <v-btn
+                  prepend-icon="mdi-star-circle"
+                  base-color="success"
+                  class="mt-4"
+                >
+                  <!-- <template v-slot:prepend>
+                    <v-icon color="success"></v-icon>
+                  </template> -->
+
+                  {{ num_recommendations }} recommendations
                 </v-btn>
               </v-card-text>
             </v-card>
@@ -214,7 +234,7 @@
 <script lang="ts" setup>
 import { computed } from "vue";
 import { File } from "@/api/models";
-import { useApiStore, useFileStore, usePairStore } from "@/api/stores";
+import { useApiStore, useFileStore, usePairStore, useCodeqlStore } from "@/api/stores";
 import { useCluster } from "@/composables";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
@@ -226,9 +246,11 @@ const router = useRouter();
 const fileStore = useFileStore();
 const pairStore = usePairStore();
 const apiStore = useApiStore();
+const codeQlStore = useCodeqlStore();
 const { legend, hasTimestamps, hasLabels, filesById } = storeToRefs(fileStore);
 const { clustering } = storeToRefs(pairStore);
 const { currentReport } = storeToRefs(apiStore);
+const { vulnerabilitiesList } = storeToRefs(codeQlStore);
 
 // Get the file by id.
 const file = computed(() => filesById.value[+fileId.value]);
@@ -250,6 +272,18 @@ const machine_code_probability = computed(() => {
 
   return 0;
 });
+
+const vulnerabilities_of_file = computed(() => {
+  if (vulnerabilitiesList.value) {
+    return vulnerabilitiesList.value.filter(vulnerability => vulnerability.filename == file.value.shortPath);
+  }
+
+  return []
+});
+
+const num_errors = computed(() => vulnerabilities_of_file.value.filter(vulnerability => vulnerability.severity == "error").length)
+const num_warnings = computed(() => vulnerabilities_of_file.value.filter(vulnerability => vulnerability.severity == "warning").length)
+const num_recommendations = computed(() => vulnerabilities_of_file.value.filter(vulnerability => vulnerability.severity == "recommendation").length)
 
 // Cluster
 const { clusterPairs, clusterFiles } = useCluster(cluster);

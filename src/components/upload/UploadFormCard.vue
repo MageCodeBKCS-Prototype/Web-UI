@@ -2,6 +2,7 @@
 import { shallowRef, ref, computed, watch } from "vue";
 import { useReportStore } from "@/api/stores";
 import { UploadReport } from "@/types/uploads/UploadReport";
+import { AxiosProgressEvent } from "axios";
 
 const reportStore = useReportStore();
 
@@ -45,8 +46,16 @@ const language = shallowRef<string | null>(null);
 // List with available programming languages.
 const languages = [
   {
+    name: "Automatic",
+    value: ""
+  },
+  {
     name: "Python 3",
     value: "python",
+  },
+  {
+    name: "C++",
+    value: "cpp",
   },
 ];
 
@@ -109,7 +118,8 @@ const onSubmit = async (): Promise<void> => {
     const data = new FormData();
     data.append("dataset[zipfile]", file ?? new Blob());
     data.append("dataset[name]", name.value ?? "");
-    data.append("dataset[programming_language]", language.value ?? "");    
+    // data.append("dataset[programming_language]", language.value ?? "");
+    data.append("dataset[programming_language]", "");    
 
     // Go to the next step.
     step.value = 2;
@@ -118,7 +128,7 @@ const onSubmit = async (): Promise<void> => {
     try {
       const response = await reportStore.createReport(
         data, 
-        (e) => {
+        (e: AxiosProgressEvent) => {
           uploadProgress.value = Math.ceil((e.loaded / (e.total ?? 1)) * 100);
 
           // Go to the next step when the upload is complete.
@@ -168,28 +178,32 @@ function pollingUploadedReport() {
       const status = await reportStore.getReportById(report.value.reportId);
 
       // Update the report status.
+      console.log(status);
+      
       report.value.status = status.status;
       report.value.machine_code_detect_status = status.machine_code_detect_status;
+      report.value.vulnerability_detection_status = status.codeql_status;
 
       // Stop the polling when the report status is final.
       if (
-        (report.value.status === "finished" && report.value.machine_code_detect_status === "detection_finished") ||
+        (report.value.status === "finished" && report.value.machine_code_detect_status === "detection_finished" && report.value.vulnerability_detection_status === "codeql_success") ||
         report.value.status === "error" ||
-        report.value.status === "failed"
+        report.value.status === "failed" ||
+        report.value.vulnerability_detection_status === "codeql_failed"
       ) {
         clearInterval(interval);
       }
 
       // If the report is the active report
       // apply some changes to the form UI.
-      if (report.value.status === "finished" && report.value.machine_code_detect_status === "detection_finished") {
+      if (report.value.status === "finished" && report.value.machine_code_detect_status === "detection_finished" && report.value.vulnerability_detection_status === "codeql_success") {
         // Go to the results page.
         step.value = 4;
         // Clear the form.
         clearForm();
       }
 
-      if (report.value.status === "failed" || report.value.status === "error") {
+      if (report.value.status === "failed" || report.value.status === "error" || report.value.vulnerability_detection_status === "codeql_failed") {
         stderr.value = report.value.stderr;
         handleError(`An error occurred while analyzing the dataset (${status.error})`);
       }
@@ -246,7 +260,7 @@ function pollingUploadedReport() {
               hide-details
             />
 
-            <v-autocomplete
+            <!-- <v-autocomplete
               class="mt-4"
               v-model="language"
               :items="languages"
@@ -268,7 +282,7 @@ function pollingUploadedReport() {
               :rules="acceptRules"
               label="I accept the above conditions."
               color="primary"
-            />
+            /> -->
           </v-form>
 
           <v-card-actions class="pa-0">
@@ -277,7 +291,6 @@ function pollingUploadedReport() {
             <v-btn
               color="primary"
               elevation="0"
-              :disabled="!valid"
               @click="onSubmit"
             >
               Analyze
@@ -309,7 +322,15 @@ function pollingUploadedReport() {
           </span>
 
           <span v-if="report?.status === 'running'">
-            Running analysis...
+            Running similarity analysis...
+          </span>
+
+          <span v-if="report?.status === 'finished' && report?.machine_code_detect_status === 'detection_processing'">
+            Running machine detection analysis...
+          </span>
+
+          <span v-if="report?.status === 'finished' && report?.machine_code_detect_status === 'detection_finished' && report?.vulnerability_detection_status === 'codeql_processing'">
+            Running vulnerability detection analysis...
           </span>
 
           <v-progress-linear
@@ -317,7 +338,7 @@ function pollingUploadedReport() {
             :stream="report?.status === 'queued'"
             :buffer-value="report?.status === 'queued' ? 0 : undefined"
             :model-value="report?.status === 'queued' ? 0 : undefined"
-            :indeterminate="report?.status === 'running'"
+            :indeterminate="report?.status === 'running' || report?.machine_code_detect_status === 'detection_processing' || report?.vulnerability_detection_status === 'codeql_processing'"
             class="mt-2"
             height="25"
           />

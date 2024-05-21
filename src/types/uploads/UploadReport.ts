@@ -1,6 +1,7 @@
 import { UploadReportStatus } from "./UploadReportStatus";
 import { ReportFile } from "./ReportFile";
 import { MachineCodeDetectionStatus } from "./MachineCodeDetectionStatus";
+import { VulnerabilityDetectionStatus } from "./VulnerabilitityDetectionStatus";
 
 export type UploadReport = {
   name: string;
@@ -24,4 +25,5 @@ export type UploadReport = {
   isFromSharing: boolean;
   report_file: ReportFile[];
   machine_code_detect_status: MachineCodeDetectionStatus;
+  vulnerability_detection_status: VulnerabilityDetectionStatus;
 };

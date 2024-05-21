@@ -11,6 +11,7 @@ export interface FileIndeterminate {
   amountOfKgrams: number;
   label: Label;
   machine_code_probability: number;
+  num_vulnerabilities: number;
   extra: {
     timestamp?: Date;
     fullName?: string;

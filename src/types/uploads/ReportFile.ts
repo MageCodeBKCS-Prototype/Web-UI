@@ -7,4 +7,5 @@ export type ReportFile = {
     url: string;
     created_at: string;
     updated_at: string;
+    num_vulnerabilities: number;
 }
