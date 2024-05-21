@@ -4,6 +4,16 @@ import { ref } from "vue";
 import { useAuthStore } from "@/api/stores";
 import { SubmitEventPromise } from "vuetify"
 import authThemeLight from "@/assets/images/auth/auth-v1-mask-light.png";
+import { AxiosError } from "axios";
+
+interface RegisterError {
+  errors: string | {
+    "username": string,
+    "email": string,
+    "password": string,
+    "password_confirmation": string
+  };
+}
 
 const authStore = useAuthStore();
 
@@ -71,12 +81,13 @@ async function register(submitEvent: SubmitEventPromise) {
     // if (error instanceof Error) {
     //   errorRegister.value.errorGeneralContent = error.message;
     // } else {
-      if (!error.response || !error.response.data) {
-        errorLogin.value.errorGeneralContent = error.message;
+      const axiosError = error as AxiosError
+      if (!axiosError.response || !axiosError.response.data) {
+        errorRegister.value.errorGeneralContent = axiosError.message;
         return;
       }
 
-      const errorData = error.response.data;
+      const errorData = axiosError.response.data as RegisterError;
       if (!errorData.errors) {
         return;
       }

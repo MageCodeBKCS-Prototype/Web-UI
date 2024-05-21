@@ -145,13 +145,13 @@ const handlePageSizeChange = async (pageSixe: number) => {
         />
 
         <!-- Share-->
-        <v-btn
+        <!-- <v-btn
           variant="text"
           color="primary"
           icon="mdi-share-variant"
           :disabled="item.status !== 'finished'"
           @click.stop="openShareDialog(item)"
-        />
+        /> -->
       </template>
 
       <template #no-data>

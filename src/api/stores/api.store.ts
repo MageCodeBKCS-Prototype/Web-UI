@@ -63,6 +63,10 @@ export const useApiStore = defineStore("api", () => {
       // Calculate the initial cut-off value.
       loadingText.value = "Calculating initial cut-off...";
       cutoff.value = guessSimilarityThreshold(pairStore.pairsActiveList);
+      if (isNaN(cutoff.value)) {
+        cutoff.value = 0;
+      }
+      
       cutoffDefault.value = cutoff.value;
     } catch (e) {
       error.value = e;

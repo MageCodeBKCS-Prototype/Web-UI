@@ -50,12 +50,14 @@
 
     <template #item.machine_code_probability="{ item }">
       <span class="submission-similarity">
-        <similarity-display
+        <similarity-display v-if="!isNaN(item.machine_code_probability)"
           :similarity="item.machine_code_probability"
           :dense="props.dense"
           progress
           dim-below-cutoff
         />
+        <p v-else-if="item.machine_code_probability < 0">Language not support</p>
+        <p v-else>No result</p>
       </span>
     </template>
 

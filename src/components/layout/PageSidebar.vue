@@ -96,7 +96,7 @@
         </v-list-item>
 
         <v-list-item
-          href="https://github.com/dodona-edu/dolos"
+          href="https://github.com/MageCodeBKCS-Prototype"
           target="_blank"
           link
         >
@@ -106,14 +106,14 @@
           <v-list-item-title>Github</v-list-item-title>
         </v-list-item>
 
-        <v-list-item href="https://dolos.ugent.be" target="_blank" link>
+        <!-- <v-list-item href="https://dolos.ugent.be" target="_blank" link>
           <template #prepend>
             <v-icon>mdi-help-circle-outline</v-icon>
           </template>
           <v-list-item-title>Documentation</v-list-item-title>
-        </v-list-item>
+        </v-list-item> -->
 
-        <v-list-item href="mailto:dodona@ugent.be" link>
+        <v-list-item href="mailto:phammanhhung10501@gmail.com" link>
           <template #prepend>
             <v-icon>mdi-email-outline</v-icon>
           </template>
@@ -132,7 +132,7 @@
           <template #prepend>
             <v-icon>mdi-tag-outline</v-icon>
           </template>
-          <v-list-item-title> Dolos - v{{ version }} </v-list-item-title>
+          <v-list-item-title> MageCode - v{{ version }} </v-list-item-title>
         </v-list-item>
       </v-list>
     </template>

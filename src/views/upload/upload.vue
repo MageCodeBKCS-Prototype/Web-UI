@@ -10,7 +10,7 @@ const search = ref("");
     <div class="hero">
       <h2 class="hero-title">MAGECODE</h2>
       <div class="hero-subtitle text-medium-emphasis">
-        Source code plagiarism detection
+        A modern code analyzer
       </div>
     </div>
 
@@ -57,8 +57,8 @@ const search = ref("");
               Reach out if you have any problems, suggestions or feedback.
             </v-card-text>
             <v-card-actions>
-              <v-btn color="primary" variant="text" href="https://dodona.ugent.be/en/contact">Contact us</v-btn>
-              <v-btn variant="text" href="https://dolos.ugent.be">View documentation</v-btn>
+              <v-btn color="primary" variant="text" href="mailto:phammanhhung10501@gmail.com">Contact us</v-btn>
+              <v-btn variant="text" href="https://github.com/MageCodeBKCS-Prototype">View source code</v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
